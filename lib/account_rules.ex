@@ -5,11 +5,11 @@ defmodule Account.Creation.Rules do
   """
 
   @spec validate_account_already_initialized(Account.t()) :: :ok | {:invalid, <<_::216>>}
-  def validate_account_already_initialized(%Account{active_card: nil, available_limit: nil} = _) do
+  def validate_account_already_initialized(%Account{active_card: nil, available_limit: nil}) do
     :ok
   end
 
-  def validate_account_already_initialized(%Account{active_card: _, available_limit: _} = _) do
+  def validate_account_already_initialized(%Account{active_card: _, available_limit: _}) do
     {:invalid, "account-already-initialized"}
   end
 
@@ -21,11 +21,11 @@ defmodule Account.Creation.Rules do
     end
   end
 
-  def validate_account_not_initialized(%Account{active_card: nil, available_limit: nil} = _) do
+  def validate_account_not_initialized(%Account{active_card: nil, available_limit: nil}) do
     {:invalid, "account-not-initialized"}
   end
 
-  def validate_account_not_initialized(%Account{active_card: _, available_limit: _} = _) do
+  def validate_account_not_initialized(%Account{active_card: _, available_limit: _}) do
     :ok
   end
 end

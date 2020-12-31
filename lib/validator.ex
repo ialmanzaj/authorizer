@@ -1,7 +1,7 @@
 defmodule Account.Validator do
   @type reason :: String.t()
   @type result :: %{account: Enum.t(), violations: [reason()]}
-  alias Account.Creation.Rules, as: AccountRules
+  alias Account.Creation.Rules, as: CreationRules
 
   def validate_account_creation(account_state, account_data) do
     result = %{
@@ -10,7 +10,7 @@ defmodule Account.Validator do
     }
 
     result
-    |> AccountRules.validate_account_already_initialized()
+    |> CreationRules.validate_account_already_initialized()
   end
 
   def validate_transactions(account_state, transactions, curr_transaction) do

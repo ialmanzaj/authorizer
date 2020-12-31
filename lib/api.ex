@@ -1,32 +1,24 @@
-defmodule Api do
+defmodule Reader do
   @moduledoc """
-  """
-  @doc """
+  Api to read input from stdin as streaming using proceses.
   """
 
-  @spec read_data(map) :: any
-  def read_data(%{"account" => %{"active-card" => _, "available-limit" => _}} = account) do
-    struct(account, Account)
-    |> IO.inspect(label: "reading account")
+  def parse(%{"account" => %{"active-card" => active, "available-limit" => limit}}=account) do
+    account
+    |> IO.inspect(label: "account: ->")
   end
 
-  def read_data(
-        %{
-          "transaction" => %{"merchant" => _, "amount" => _, "time" => _}
-        } = transaction
-      ) do
-    struct(transaction, Transaction)
-    |> IO.inspect(label: "reading transaction")
+  def parse(%{"transaction" => %Transaction{}} = transaction) do
+    transaction
+    |> IO.inspect(label: "transaction: ->")
   end
 
-  @spec get_input :: no_return
-  def get_input() do
+  def listen_stdin() do
     {_, json} =
       IO.read(:stdio, :line)
-      |> String.trim()
       |> Poison.decode()
 
-    read_data(json)
-    get_input()
+    parse(json)
+    listen_stdin()
   end
 end
