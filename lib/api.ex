@@ -3,7 +3,8 @@ defmodule Reader do
   Api to read input from stdin as streaming using proceses.
   """
 
-  def parse(%{"account" => %{"active-card" => active, "available-limit" => limit}}=account) do
+  @spec parse(map) :: any
+  def parse(%{"account" => %{"active-card" => active, "available-limit" => limit}} = account) do
     account
     |> IO.inspect(label: "account: ->")
   end
@@ -13,6 +14,7 @@ defmodule Reader do
     |> IO.inspect(label: "transaction: ->")
   end
 
+  @spec listen_stdin :: no_return
   def listen_stdin() do
     {_, json} =
       IO.read(:stdio, :line)

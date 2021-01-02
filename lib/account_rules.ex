@@ -1,31 +1,29 @@
-defmodule Account.Creation.Rules do
+defmodule AccountRules do
   @moduledoc false
   @doc """
   Rules for account creation validation
   """
+  alias Config.Validator, as: Validator
 
-  @spec validate_account_already_initialized(Account.t()) :: :ok | {:invalid, <<_::216>>}
-  def validate_account_already_initialized(%Account{active_card: nil, available_limit: nil}) do
+  def validate_create_account(account) do
+    response = Response.new(account)
+
+    response
+    |> validate_account_already_initialized()
+  end
+
+  @spec validate_account_already_initialized(any) :: none
+  def validate_account_already_initialized(%Response{} = response) do
+    Validator.validate_change(response, fn account ->
+      is_already_initialized(account)
+    end)
+  end
+
+  defp is_already_initialized(%Account{active_card: nil, available_limit: nil}) do
     :ok
   end
 
-  def validate_account_already_initialized(%Account{active_card: _, available_limit: _}) do
+  defp is_already_initialized(%Account{active_card: _, available_limit: _}) do
     {:invalid, "account-already-initialized"}
-  end
-
-  def validate_card_not_active(%Account{} = account) do
-    if account.active_card do
-      :ok
-    else
-      {:invalid, "card-not-active"}
-    end
-  end
-
-  def validate_account_not_initialized(%Account{active_card: nil, available_limit: nil}) do
-    {:invalid, "account-not-initialized"}
-  end
-
-  def validate_account_not_initialized(%Account{active_card: _, available_limit: _}) do
-    :ok
   end
 end

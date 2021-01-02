@@ -1,25 +1,43 @@
 defmodule Authorizer do
   @moduledoc """
-  Authorizer in charge of managing the state and actions
+  Authorizer in charge of managing the state and coordinate actions
   """
   use GenServer
+  alias Account.Rules, as: AccountValidator
+  alias Transaction.Rules, as: TransactionValidator
 
   # Client APIs
   def start_link(), do: GenServer.start_link(__MODULE__, 0)
 
-  def create_account(account, new_acount), do: GenServer.call(account, {:create, new_acount})
+  @spec create_account(atom | pid | {atom, any} | {:via, atom, any}, any) :: any
+  def create_account(account, new_acount) do
+    response = AccountValidator.validate_create_account(account)
 
+    if response.valid do
+      GenServer.call(account, {:create, new_acount})
+    else
+      # send an output to the stdin with the response
+      # GenServer.call(account, {:create, new_acount})
+    end
+  end
+
+  @spec get_available_limit(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_available_limit(account), do: GenServer.call(account, :available_limit)
 
   @spec is_card_active(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def is_card_active(account), do: GenServer.call(account, :card_active)
 
-  @spec authorize_transaction(atom | pid | {atom, any} | {:via, atom, any}, any) :: any
-  def authorize_transaction(account, transaction),
-    do: GenServer.call(account, {:authorize, transaction})
+  def authorize_transaction(account, current_transaction, past_transactions) do
+    response =
+      TransactionValidator.validate_transaction(account, current_transaction, past_transactions)
 
-  def record_transaction(account, transaction),
-    do: GenServer.call(account, {:record, transaction})
+    if response.valid do
+      GenServer.call(account, {:authorize, current_transaction})
+    else
+      # send an output to the stdin with the response
+      # GenServer.call(account, {:create, new_acount})
+    end
+  end
 
   # Server (callbacks)
   def start_app() do

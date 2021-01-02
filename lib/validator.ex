@@ -1,48 +1,18 @@
-defmodule Account.Validator do
-  @type reason :: String.t()
-  @type result :: %{account: Enum.t(), violations: [reason()]}
-  alias Account.Creation.Rules, as: CreationRules
+defmodule Config.Validator do
+  def validate(response, validator) do
+    %{data: data, violations: violations} = response
 
-  def validate_account_creation(account_state, account_data) do
-    result = %{
-      account: account_state,
-      violations: []
-    }
+    output =
+      Enum.reduce([validator], response, fn validator, result ->
+        case validator.(data) do
+          :ok ->
+            result
 
-    result
-    |> CreationRules.validate_account_already_initialized()
-  end
+          {:invalid, reason} ->
+            %{result | violations: [reason | violations], valid?: false}
+        end
+      end)
 
-  def validate_transactions(account_state, transactions, curr_transaction) do
-    result = %{
-      account: account_state,
-      violations: []
-    }
-
-    result
-  end
-
-  defp required() do
-    fn
-      nil -> {:invalid, "is required"}
-      _other -> :ok
-    end
-  end
-
-  def validation(initial_result, validators) do
-    value = get_in(initial_result, [:account])
-
-    Enum.reduce(validators, initial_result, fn validator, result ->
-      case validator.(value) do
-        :ok ->
-          result
-
-        {:invalid, reason} ->
-          update_in(result, [:violations], fn
-            nil -> [reason]
-            other_reasons -> [reason | other_reasons]
-          end)
-      end
-    end)
+    output
   end
 end
