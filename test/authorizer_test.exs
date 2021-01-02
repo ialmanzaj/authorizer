@@ -1,6 +1,5 @@
-defmodule ApiTest do
+defmodule AuthorizerTest do
   use ExUnit.Case
-  alias Authorizer.{AccountRules, TransactionRules}
 
   setup do
     account = Authorizer.start_app()
