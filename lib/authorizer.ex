@@ -3,22 +3,16 @@ defmodule Authorizer do
   Authorizer in charge of managing the state and coordinate actions
   """
   use GenServer
-  alias Account.Rules, as: AccountValidator
-  alias Transaction.Rules, as: TransactionValidator
+  alias Authorizer.{AccountRules, TransactionRules}
 
   # Client APIs
+  @spec start_link :: :ignore | {:error, any} | {:ok, pid}
   def start_link(), do: GenServer.start_link(__MODULE__, 0)
 
-  @spec create_account(atom | pid | {atom, any} | {:via, atom, any}, any) :: any
-  def create_account(account, new_acount) do
-    response = AccountValidator.validate_create_account(account)
+  def get_current_account(account), do: GenServer.call(account, :account)
 
-    if response.valid do
-      GenServer.call(account, {:create, new_acount})
-    else
-      # send an output to the stdin with the response
-      # GenServer.call(account, {:create, new_acount})
-    end
+  def create_account(account, new_acount) do
+    GenServer.call(account, {:create, new_acount})
   end
 
   @spec get_available_limit(atom | pid | {atom, any} | {:via, atom, any}) :: any
@@ -27,9 +21,14 @@ defmodule Authorizer do
   @spec is_card_active(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def is_card_active(account), do: GenServer.call(account, :card_active)
 
-  def authorize_transaction(account, current_transaction, past_transactions) do
+  @spec authorize_transaction(Account.t(), Transaction.t(), [any]) :: nil
+  def authorize_transaction(
+        account,
+        %Transaction{} = current_transaction,
+        past_transactions
+      ) do
     response =
-      TransactionValidator.validate_transaction(account, current_transaction, past_transactions)
+      TransactionRules.validate_transaction(account, current_transaction, past_transactions)
 
     if response.valid do
       GenServer.call(account, {:authorize, current_transaction})
@@ -50,6 +49,8 @@ defmodule Authorizer do
     {:ok, %Account{}}
   end
 
+  def handle_call(:account, _from, state), do: {:reply, state, state}
+
   @impl true
   def handle_call(
         :available_limit,
@@ -65,5 +66,11 @@ defmodule Authorizer do
       ),
       do: {:reply, card_active, state}
 
-  def handle_call({:create, newAccount}, _from, _state), do: {:reply, :ok, newAccount}
+  def handle_call({:create, newAccount}, _from, state) do
+    # response = AccountRules.validate_create_account(state)
+    IO.inspect(state)
+    # if response.valid do
+    {:reply, :ok, newAccount}
+    # end
+  end
 end

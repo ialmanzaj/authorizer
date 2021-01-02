@@ -1,4 +1,4 @@
-defmodule AccountRules do
+defmodule Authorizer.AccountRules do
   @moduledoc false
   @doc """
   Rules for account creation validation
@@ -9,21 +9,22 @@ defmodule AccountRules do
     response = Response.new(account)
 
     response
+    |> IO.inspect()
     |> validate_account_already_initialized()
   end
 
   @spec validate_account_already_initialized(any) :: none
-  def validate_account_already_initialized(%Response{} = response) do
-    Validator.validate_change(response, fn account ->
-      is_already_initialized(account)
+  defp validate_account_already_initialized(%Response{} = response) do
+    Validator.validate(response, fn account ->
+      account |> IO.inspect()
     end)
   end
 
-  defp is_already_initialized(%Account{active_card: nil, available_limit: nil}) do
+  defp check_is_already_initialized(%Account{active_card: nil, available_limit: nil}) do
     :ok
   end
 
-  defp is_already_initialized(%Account{active_card: _, available_limit: _}) do
+  defp check_is_already_initialized(%Account{active_card: _, available_limit: _}) do
     {:invalid, "account-already-initialized"}
   end
 end
