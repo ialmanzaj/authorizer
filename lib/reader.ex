@@ -1,25 +1,31 @@
-defmodule Reader do
+defmodule ReaderStream do
   @moduledoc """
   Api to read input from stdin as streaming using proceses.
   """
+  alias Authorizer.{Parser}
 
-  @spec parse(map) :: any
-  def parse(%{"account" => %{"active-card" => active, "available-limit" => limit}} = account) do
-    account
-    |> IO.inspect(label: "account: ->")
-  end
-
-  def parse(%{"transaction" => %Transaction{}} = transaction) do
-    transaction
-    |> IO.inspect(label: "transaction: ->")
+  def str() do
+    StringIO.open("foo", [capture_prompt: true], fn pid ->
+      input = IO.gets(pid, ">")
+      IO.write(pid, "The input was #{input}")
+      StringIO.contents(pid)
+    end)
   end
 
   def read() do
-    {_, json} =
+    input_decoded =
       IO.read(:stdio, :line)
+      |> String.trim()
       |> Poison.decode()
 
-    parse(json)
-    read()
+    case input_decoded do
+      {:ok, obj} ->
+        obj
+
+      _ ->
+        {:error, "Error decoding "}
+    end
   end
 end
+
+ReaderStream.str()
