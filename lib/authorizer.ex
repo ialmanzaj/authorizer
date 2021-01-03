@@ -20,10 +20,12 @@ defmodule Authorizer do
   @spec get_available_limit(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_available_limit(account), do: GenServer.call(account, :available_limit)
 
+  def get_past_transactions(account), do: GenServer.call(account, :last_transactions)
+
   @spec is_card_active(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def is_card_active(account), do: GenServer.call(account, :card_active)
 
-  def authorize_transaction(account, current_transaction, past_transactions),
+  def authorize_transaction(account, current_transaction),
     do: GenServer.call(account, {:authorize, current_transaction})
 
   # Server (callbacks)
@@ -39,6 +41,9 @@ defmodule Authorizer do
 
   def handle_call(:account, _from, %{response: %Response{account: account}} = state),
     do: {:reply, account, state}
+
+  def handle_call(:last_transactions, _from, %{transactions: transactions} = state),
+    do: {:reply, transactions, state}
 
   @impl true
   def handle_call(
@@ -78,10 +83,10 @@ defmodule Authorizer do
       TransactionValidator.validate_transaction(account, current_transaction, transactions)
 
     if response.valid? do
-      {:reply, :ok,
+      {:reply, response,
        %{state | response: response, transactions: [current_transaction | transactions]}}
     else
-      {:reply, :ok, %{state | response: response}}
+      {:reply, response, %{state | response: response}}
     end
   end
 end

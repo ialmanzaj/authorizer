@@ -8,7 +8,7 @@ defmodule Authorizer.TransactionValidator do
   def validate_transaction(
         %Account{} = account,
         %Transaction{} = current_transaction,
-        last_three_transactions
+        past_transactions
       ) do
     response = Response.new(account)
 
@@ -16,8 +16,8 @@ defmodule Authorizer.TransactionValidator do
     |> validate_account_not_initialized()
     |> validate_card_not_active()
     |> validate_insufficient_limit(current_transaction)
-    |> validate_high_frequency_transactions(current_transaction, last_three_transactions)
-    |> validate_similar_transactions(current_transaction, List.last(last_three_transactions))
+    |> validate_high_frequency_transactions(current_transaction, past_transactions)
+    |> validate_similar_transactions(current_transaction, List.last(past_transactions))
   end
 
   defp validate_account_not_initialized(%Response{} = response) do
@@ -54,6 +54,12 @@ defmodule Authorizer.TransactionValidator do
       else
         {:invalid, "insufficient-limit"}
       end
+    end)
+  end
+
+  defp validate_high_frequency_transactions(%Response{} = response, %Transaction{}, []) do
+    Validator.validate(response, fn _ ->
+      :ok
     end)
   end
 
