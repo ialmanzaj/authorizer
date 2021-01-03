@@ -1,7 +1,7 @@
 defmodule Response do
-  defstruct(valid?: true, data: nil, violations: [])
+  defstruct(account: %Account{}, violations: [], valid?: true)
 
-  def new(data) do
-    %Response{valid?: true, data: data, violations: []}
+  def new(account) do
+    %Response{account: account, violations: [], valid?: true}
   end
 end

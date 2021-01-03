@@ -21,10 +21,24 @@ defmodule AuthorizerTest do
            }
   end
 
-  @tag :pending
+  # @tag :pending
   test "create an account and check limit", %{account: account} do
-    new_account = %Account{active_card: true, available_limit: 100}
-    Authorizer.create_account(account, new_account)
+    assert Authorizer.get_current_account(account) == %Account{
+             active_card: nil,
+             available_limit: nil
+           }
+
+    n1 = %Account{active_card: true, available_limit: 100}
+    n2 = %Account{active_card: true, available_limit: 300}
+    assert Authorizer.create_account(account, n1) == n1
     assert Authorizer.get_available_limit(account) == 100
+
+    assert Authorizer.create_account(account, n2) == %Response{
+             account: %Account{active_card: true, available_limit: 100},
+             violations: ["account-already-initialized"],
+             valid?: false
+           }
+
+    assert Authorizer.get_current_account(account) == n1
   end
 end

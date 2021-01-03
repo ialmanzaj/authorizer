@@ -3,14 +3,16 @@ defmodule Authorizer do
   Authorizer in charge of managing the state and coordinate actions
   """
   use GenServer
-  alias Authorizer.{AccountRules, TransactionRules}
+  alias Authorizer.{AccountValidator, TransactionValidator}
 
   # Client APIs
   @spec start_link :: :ignore | {:error, any} | {:ok, pid}
   def start_link(), do: GenServer.start_link(__MODULE__, 0)
 
+  @spec get_current_account(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_current_account(account), do: GenServer.call(account, :account)
 
+  @spec create_account(atom | pid | {atom, any} | {:via, atom, any}, any) :: any
   def create_account(account, new_acount) do
     GenServer.call(account, {:create, new_acount})
   end
@@ -21,22 +23,8 @@ defmodule Authorizer do
   @spec is_card_active(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def is_card_active(account), do: GenServer.call(account, :card_active)
 
-  @spec authorize_transaction(Account.t(), Transaction.t(), [any]) :: nil
-  def authorize_transaction(
-        account,
-        %Transaction{} = current_transaction,
-        past_transactions
-      ) do
-    response =
-      TransactionRules.validate_transaction(account, current_transaction, past_transactions)
-
-    if response.valid do
-      GenServer.call(account, {:authorize, current_transaction})
-    else
-      # send an output to the stdin with the response
-      # GenServer.call(account, {:create, new_acount})
-    end
-  end
+  def authorize_transaction(account, current_transaction, past_transactions),
+    do: GenServer.call(account, {:authorize, current_transaction})
 
   # Server (callbacks)
   def start_app() do
@@ -46,31 +34,54 @@ defmodule Authorizer do
 
   @impl true
   def init(_state) do
-    {:ok, %Account{}}
+    {:ok, %{response: %Response{}, transactions: []}}
   end
 
-  def handle_call(:account, _from, state), do: {:reply, state, state}
+  def handle_call(:account, _from, %{response: %Response{account: account}} = state),
+    do: {:reply, account, state}
 
   @impl true
   def handle_call(
         :available_limit,
         _from,
-        %{active_card: _, available_limit: available_limit} = state
+        %{
+          response: %Response{account: %Account{available_limit: available_limit}}
+        } = state
       ),
       do: {:reply, available_limit, state}
 
   def handle_call(
         :card_active,
         _from,
-        %{active_card: card_active, available_limit: _} = state
+        %{
+          response: %Response{account: %Account{active_card: active_card}}
+        } = state
       ),
-      do: {:reply, card_active, state}
+      do: {:reply, active_card, state}
 
-  def handle_call({:create, newAccount}, _from, state) do
-    # response = AccountRules.validate_create_account(state)
-    IO.inspect(state)
-    # if response.valid do
-    {:reply, :ok, newAccount}
-    # end
+  def handle_call({:create, newAccount}, _from, %{response: %Response{account: account}} = state) do
+    response = AccountValidator.validate_create_account(account)
+
+    if response.valid? do
+      {:reply, newAccount, %{state | response: %Response{account: newAccount}}}
+    else
+      {:reply, response, %{state | response: response}}
+    end
+  end
+
+  def handle_call(
+        {:authorize, current_transaction},
+        _from,
+        %{response: %Response{account: account}, transactions: transactions} = state
+      ) do
+    response =
+      TransactionValidator.validate_transaction(account, current_transaction, transactions)
+
+    if response.valid? do
+      {:reply, :ok,
+       %{state | response: response, transactions: [current_transaction | transactions]}}
+    else
+      {:reply, :ok, %{state | response: response}}
+    end
   end
 end

@@ -1,9 +1,9 @@
-defmodule Authorizer.TransactionRules do
+defmodule Authorizer.TransactionValidator do
   @moduledoc false
   @doc """
   Rules for transaction authorization validation
   """
-  alias Config.Validator, as: Validator
+  alias Authorizer.Validator, as: Validator
 
   def validate_transaction(
         %Account{} = account,
@@ -73,12 +73,11 @@ defmodule Authorizer.TransactionRules do
     end)
   end
 
-  @spec validate_similar_transactions(Response.t(), Transaction.t(), Transaction.t()) :: any
-  def validate_similar_transactions(
-        %Response{} = response,
-        %Transaction{merchant: merchant, amount: amount, time: time},
-        %Transaction{merchant: last_merchant, amount: last_amount, time: last_time}
-      ) do
+  defp validate_similar_transactions(
+         %Response{} = response,
+         %Transaction{merchant: merchant, amount: amount, time: time},
+         %Transaction{merchant: last_merchant, amount: last_amount, time: last_time}
+       ) do
     Validator.validate(response, fn _ ->
       if merchant == last_merchant and amount == last_amount and
            TimeUtils.are_in_two_min_interval?(time, last_time) do
@@ -89,7 +88,7 @@ defmodule Authorizer.TransactionRules do
     end)
   end
 
-  def validate_similar_transactions(%Response{} = response, %Transaction{}, nil) do
+  defp validate_similar_transactions(%Response{} = response, %Transaction{}, nil) do
     Validator.validate(response, fn _ ->
       :ok
     end)

@@ -14,13 +14,12 @@ defmodule Reader do
     |> IO.inspect(label: "transaction: ->")
   end
 
-  @spec listen_stdin :: no_return
-  def listen_stdin() do
+  def read() do
     {_, json} =
       IO.read(:stdio, :line)
       |> Poison.decode()
 
     parse(json)
-    listen_stdin()
+    read()
   end
 end
