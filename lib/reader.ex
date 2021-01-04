@@ -3,32 +3,19 @@ defmodule ReaderStream do
   Api to read input from stdin as streaming using proceses.
   """
   require Logger
+  alias Authorizer.{Parser}
 
-  def parse_response_to_json(%Response{} = response) do
-    {_, json} =
-      response
-      |> Poison.encode()
-
-    json
-  end
-
-  def write_output(response) do
-    parse_response_to_json(response)
-    |> IO.write()
-  end
-
-  @spec read_input :: false | nil | true | binary | [any] | number | map
-  def read_input() do
-    input_decoded =
+  def read() do
+    input =
       IO.read(:stdio, :line)
       |> Poison.decode()
 
-    case input_decoded do
-      {:ok, obj} ->
-        obj
+    case input do
+      {:ok, input} ->
+        {:ok, Parser.parse(input)}
 
-      _ ->
-        {:error, "Error decoding "}
+      {:error, _, _} ->
+        {:error, "Error decoding\n"}
     end
   end
 end

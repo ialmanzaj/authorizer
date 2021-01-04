@@ -11,6 +11,14 @@ defmodule Authorizer.API do
     GenServer.start_link(__MODULE__, 0)
   end
 
+  def execute(account, %Account{} = new_acount) do
+    create_account(account, new_acount)
+  end
+
+  def execute(account, %Transaction{} = transaction) do
+    authorize_transaction(account, transaction)
+  end
+
   @spec get_current_account(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_current_account(account), do: GenServer.call(account, :account)
 
@@ -70,14 +78,16 @@ defmodule Authorizer.API do
     response = AccountValidator.validate_create_account(account)
 
     if response.valid? do
-      {:reply, newAccount, %{state | response: %Response{account: newAccount}}}
+      result = %Response{account: newAccount}
+
+      {:reply, result, %{state | response: result}}
     else
       {:reply, response, %{state | response: response}}
     end
   end
 
   def handle_call(
-        {:authorize, current_transaction},
+        {:authorize, %Transaction{amount: amount} = current_transaction},
         _from,
         %{response: %Response{account: account}, transactions: transactions} = state
       ) do
@@ -85,8 +95,15 @@ defmodule Authorizer.API do
       TransactionValidator.validate_transaction(account, current_transaction, transactions)
 
     if response.valid? do
+      account = Account.decrement(account, amount)
+      response = %Response{response | account: account}
+
       {:reply, response,
-       %{state | response: response, transactions: [current_transaction | transactions]}}
+       %{
+         state
+         | response: response,
+           transactions: [current_transaction | transactions]
+       }}
     else
       {:reply, response, %{state | response: response}}
     end
