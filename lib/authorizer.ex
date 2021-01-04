@@ -1,4 +1,4 @@
-defmodule Authorizer do
+defmodule Authorizer.API do
   @moduledoc """
   Authorizer in charge of managing the state and coordinate actions
   """
@@ -7,7 +7,9 @@ defmodule Authorizer do
 
   # Client APIs
   @spec start_link :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(), do: GenServer.start_link(__MODULE__, 0)
+  def start_link(_opts \\ []) do
+    GenServer.start_link(__MODULE__, 0)
+  end
 
   @spec get_current_account(atom | pid | {atom, any} | {:via, atom, any}) :: any
   def get_current_account(account), do: GenServer.call(account, :account)
@@ -30,7 +32,7 @@ defmodule Authorizer do
 
   # Server (callbacks)
   def start_app() do
-    {:ok, pid} = start_link()
+    {:ok, pid} = start_link([])
     pid
   end
 

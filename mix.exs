@@ -8,6 +8,7 @@ defmodule Api.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      mod: {Authorizer, []},
       escript: [
         main_module: Authorizer.CLI
       ]
