@@ -32,7 +32,11 @@ defmodule AuthorizerTest do
 
     n1 = %Account{active_card: true, available_limit: 100}
 
-    assert API.create_account(account, n1) == n1
+    assert API.create_account(account, n1) == %Response{
+             account: n1,
+             violations: [],
+             valid?: true
+           }
 
     n2 = %Account{active_card: true, available_limit: 300}
 
@@ -53,12 +57,16 @@ defmodule AuthorizerTest do
 
     n1 = %Account{active_card: true, available_limit: 100}
 
-    assert API.create_account(account, n1) == n1
+    assert API.create_account(account, n1) == %Response{
+             account: n1,
+             valid?: true,
+             violations: []
+           }
 
     t1 = Transaction.new("Burger King", 6, "2019-02-13T10:00:00.000Z")
 
     assert API.authorize_transaction(account, t1) == %Response{
-             account: n1,
+             account: %Account{active_card: true, available_limit: 94},
              valid?: true,
              violations: []
            }
@@ -70,13 +78,18 @@ defmodule AuthorizerTest do
     account: account
   } do
     n1 = %Account{active_card: true, available_limit: 100}
-    assert API.create_account(account, n1) == n1
+
+    assert API.create_account(account, n1) == %Response{
+             account: n1,
+             violations: [],
+             valid?: true
+           }
 
     t1 = Transaction.new("Burger King", 6, "2019-02-13T10:00:00.000Z")
     t2 = Transaction.new("Burger King", 6, "2019-02-13T10:01:00.000Z")
 
     assert API.authorize_transaction(account, t1) == %Response{
-             account: n1,
+             account: %Account{active_card: true, available_limit: 94},
              valid?: true,
              violations: []
            }
@@ -84,7 +97,7 @@ defmodule AuthorizerTest do
     assert API.get_past_transactions(account) == [t1]
 
     assert API.authorize_transaction(account, t2) == %Response{
-             account: n1,
+             account: %Account{active_card: true, available_limit: 94},
              violations: ["doubled-transaction"],
              valid?: false
            }

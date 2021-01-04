@@ -1,9 +1,9 @@
-defmodule Api.MixProject do
+defmodule Authorizer.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :api,
+      app: :authorizer,
       version: "0.1.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
@@ -11,6 +11,16 @@ defmodule Api.MixProject do
       mod: {Authorizer, []},
       escript: [
         main_module: Authorizer.CLI
+      ],
+      # add releases configuration
+      releases: [
+        # we can name releases anything, this will be prod's config
+        prod: [
+          # we'll be deploying to Linux only
+          include_executables_for: [:unix],
+          # have Mix automatically create a tarball after assembly
+          steps: [:assemble, :tar]
+        ]
       ]
     ]
   end

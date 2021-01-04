@@ -5,9 +5,29 @@ defmodule ReaderStream do
   require Logger
   alias Authorizer.{Parser}
 
-  def read() do
+  def listen(account) do
+    case read() do
+      {:ok, decoded_input} ->
+        account
+        |> Authorizer.API.execute(decoded_input)
+        |> Parser.encode_response()
+        |> add_next_line()
+        |> IO.write()
+
+      {:error, msg} ->
+        IO.write(:stdio, msg)
+    end
+
+    listen(account)
+  end
+
+  defp add_next_line(word) do
+    word <> "\n"
+  end
+
+  defp read() do
     input =
-      IO.read(:stdio, :line)
+      IO.gets("Authorizer app: --->\n")
       |> Poison.decode()
 
     case input do
