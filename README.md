@@ -25,7 +25,3 @@ Authorizer was developed using Elixir because it's dynamic, functional language 
 - **AccountValidator API** to validate all the account creation rules.
 - **TransactionValidator API** to validate all the transaction authorization rules.
 - **ReaderStream API** to read and listen new incoming data from stdin.
-
-## Credits
-
-Authorizer was developed and maintained by Isaac Almanza. You can stay in touch at isaac.almanza19@gmail.com.
