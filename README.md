@@ -16,10 +16,11 @@ Authorizer was developed using Elixir because it's dynamic, functional language 
 ## Components
 
 - **Authorizer API** to perform actions when incoming input is comming and manage the account state. It's main responsibility are:
-- Receive incoming parsed input to perform actions.
-- Manage the state of the app when an event happen.
 
-  _It uses a GenServer. A Genserver is process can hold and manage state, but it can also perform calculations, wait for completion, process incoming messages, and do things completely on it’s own. It runs as a separate process (on the BEAM virtual machine, not the OS), so it is often used to handle non-blocking processing of things._
+  - Receive incoming parsed input to perform actions.
+  - Manage the state of the app when an event happen.
+
+  _Authorizer API uses a GenServer. A Genserver is process can hold and manage state, but it can also perform calculations, wait for completion, process incoming messages, and do things completely on it’s own. It runs as a separate process (on the BEAM virtual machine, not the OS), so it is often used to handle non-blocking processing of things._
 
 - **AccountValidator API** to validate all the account creation rules.
 - **TransactionValidator API** to validate all the transaction authorization rules.
